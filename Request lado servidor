@@ -1,0 +1,85 @@
+//Universidad del Valle de Guatemala
+//Trabajo de graduacion Sistema de localización y rastreo por medio de alarma de pánico personal
+//Presentado por Victor Alberto Vargas Contreras, 08470
+//Guatemala 2013
+
+//Descripcion del codigo: El presente archivo contiene el codigo necesario para realizar la funcion del servicio
+//Request. Modifica en la base de datos del usuario, mas especificamente activa la variable request.
+
+<html>
+<head>
+<title>My Page</title>
+</head>
+<body>
+
+
+<?php
+
+
+	//Parametros para crecendiales a la base de datos. Por seguridad se han omitido
+	$HOST = "";
+	$USERDB = "";
+	$PASSDB = "";
+	$NAMEDB = "";
+	$TABLENAME1 = "";
+	$TABLENAME2 = "";
+	
+	
+	
+	
+	// Create conexion con la base de datos que contiene a los usuarios
+	$con=mysqli_connect($HOST,$USERDB,$PASSDB,$NAMEDB);
+
+	// Check connection
+	if (mysqli_connect_errno($con))
+	  {
+	  	echo "Failed to connect to MySQL : " . mysqli_connect_error();
+	  }
+	else
+	  { 
+	  
+	  	if(TRUE)
+	  	{
+		  	//Busco entre los usuarios el request	
+		  	$resultado = mysqli_query($con,"SELECT `Request` FROM `Usuarios` ");
+			        
+		        if($resultado)
+		        {
+		        
+					$row = mysqli_fetch_array($resultado);
+					
+					//Si es que no ha sido modificado(valor 0)cambio su valor a 1
+					if(intval($row['Request'])==0)
+					{
+						
+						//Actualizo mi variable de request
+						echo "Se ha realizado la peticion correctamente";
+						$resultado2 = mysqli_query($con,"UPDATE `Usuarios` SET `Request`= 1 ");
+						
+					}
+					//Si ya estaba en uno se envia mensaje que no es necesario volver a activar
+					else
+					{
+						echo "Ya se encuentra realizada la peticion";
+					}
+							
+		        }		
+		        else
+		        {
+		        	echo "Error sending";
+		        }
+	        }
+	      
+	        mysqli_close($con);	
+        
+	 }  
+	       	
+          
+?>
+
+
+
+
+
+</body>
+</html>
