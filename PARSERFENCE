@@ -1,0 +1,221 @@
+
+//Universidad del Valle de Guatemala
+//Trabajo de graduacion Sistema de localización y rastreo por medio de alarma de pánico personal
+//Presentado por Victor Alberto Vargas Contreras, 08470
+//Guatemala 2013
+
+//Descripcion del codigo: En modo de GeoFence se tiene el decodificador de la informacion que envio el dispositivo. 
+//Este decodificador es llamado PARSERFENCE.PHP y es el encargado principalmente de ingresar las posiciones a la 
+//base de datos provenientes del dispositivo y notificarnos si se ha salido de sus limites permisibles
+
+
+<html>
+<head>
+<title>My Page</title>
+</head>
+<body>
+
+
+<?php
+
+	//Variables almacenadoras de todas las posiciones encontradas
+	$latarray = array();	
+	$lonarray = array(); 
+	
+	//Parametros para crecendiales a la base de datos. Por seguridad se han omitido
+	$HOST = "";
+	$USERDB = "";
+	$PASSDB = "";
+	$NAMEDB = "";
+	$TABLENAME1 = "";
+	$TABLENAME2 = "";
+	
+	//Inicializacion de variables
+	$LATITUDDB   = 0.0;
+	$LONGITUDDB  = 0.0;
+	
+	$ORG = 1;
+	
+	//Variables de las posiciones ingresadas en formado Grados mas minutos decimales
+	$LATPAR	     = floatval($_POST["lat"]);
+	$LONPAR	     = floatval($_POST["lon"]);
+	
+	//Conversione a minutos decimales
+	$LATPAR	     = intval($LATPAR)+ ($LATPAR - intval($LATPAR))*(100/60);
+	$LONPAR	     = (intval($LONPAR)+ ($LONPAR - intval($LONPAR))*(100/60))*(-1);
+	
+	$LATITUDDB   = $LATPAR;	
+	$LONGITUDDB  = $LONPAR;
+
+
+	//Parametros para saber cuando fue ingresada la ubicacion	
+	$MESDB = 0;
+	$MESDB = intval(date(m));
+	$DIADB = 0;
+	$DIADB = intval(date(d));	
+	$ANIODB = 0;
+	$ANIODB = intval(date(Y));	
+	$HORASDB = 0;
+	$HORASDB = intval(date(H));
+	
+	
+	// Create conexion con la base de datos que contiene a los usuarios
+	$con=mysqli_connect($HOST,$USERDB,$PASSDB,$NAMEDB);
+
+	// Check connection
+	if (mysqli_connect_errno($con))
+	  {
+	  	echo "Failed to connect to MySQL : " . mysqli_connect_error();
+	  	mysqli_close($con);
+	  }
+	else
+	  { 
+	  
+	  	if($ORG == 1)
+	        {
+		  	//Ingreso a la base datos las posiciones si son validas
+		  	if($LATITUDDB>1 &&  $LONGITUDDB<0)
+		  	{
+		  		//Si es que no tengo las variables llenas de ceros 
+		  		echo "procedo a ingresar variables";
+		  		
+		  		
+		  		$resultado_x = mysqli_query($con,"INSERT INTO `UBICA`( `LAT`, `LON`, `MES`, `DIA`, `ANIO`, `HORA`) VALUES ($LATITUDDB,$LONGITUDDB, $MESDB,$DIADB,$ANIODB, $HORASDB ) ");
+			        
+			        if($resultado_x)
+			        {
+						//Respuesta al modulo 
+			        	echo "Good";
+			   
+			        }
+			        else
+			        {
+						//Respuesta al modulo 
+			        	echo "Error sending";
+			        }
+		  	
+		  	}
+		  	else
+		  	{
+				//El formato de las variables no es el correcto
+		  		echo "variables malas";
+		  	}
+	  	} 
+	  	
+	  
+	        mysqli_close($con);	
+        
+	 }  
+	 
+	//Delay a espera que los datos sean ingresados a la DB para su analisis
+	usleep(1000000);
+
+	 
+	// Nueva conexion para verificar si el dispositivo ha salido de sus limites permisibles
+	$con=mysqli_connect($HOST,$USERDB,$PASSDB,$NAMEDB);
+
+	// Check connection
+	if (mysqli_connect_errno($con))
+	  {
+	  	echo "Failed to connect to MySQL : " . mysqli_connect_error();
+	  	
+	  	mysqli_close($con);	
+	        
+	  }
+	else
+	  { 
+				//Tomo todas las ubicaciones
+		        $resultado = mysqli_query($con,"SELECT * FROM `UBICA`  ");
+		        
+		        if($resultado)
+		        {
+		        	//echo "Lat/Lon           Hora";
+		        	echo "<br>";
+		        	
+		        //Guardo todas las ubicaciones en dos arrays	      	
+		        while($row = mysqli_fetch_array($resultado))
+				  {
+				  $latarray[] = $row['LAT']; 
+				  $lonarray[] = $row['LON'];
+				  $contador++;
+				  }
+				 
+			
+		        }
+		        else
+		        {
+		        	echo "Error sending";
+		        }
+		      
+		        mysqli_close($con);	
+	             	 	
+          }
+          
+
+		 //Variables para el calculo de la distancia entre dos puntos
+
+		//Ubicacion del radio permisible	
+		$circulat = 14.61065;
+		$circulon = -90.500743;
+		//Radio en metros el circulo permisible
+		$Radio = 200;
+		$latsc_map0 = 0.0;
+		$lonsc_map0 = 0.0;
+		//Tomo la ultima posicion ingresada a la base de datos
+		$latsc_map0 =  $latarray[intval(count($latarray))-1];
+		$lonsc_map0 =  $lonarray[intval(count($latarray))-1]; 
+
+		//Calculos para la formula de Haversine
+		$lat1 = $latsc_map0;
+		$lon1 = $lonsc_map0;
+
+		$lat2 = $circulat;
+		$lon2 = $circulon;
+
+		$R = 6371; // km
+		$dLat = ($lat2-$lat1)*(pi()/180);
+		$dLon = ($lon2-$lon1)*(pi()/180);
+		$lat1 = $lat1*(pi()/180);
+		$lat2 = $lat2*(pi()/180);
+
+		$a = sin($dLat/2) * sin($dLat/2) + sin($dLon/2) * sin($dLon/2) * cos($lat1) * cos($lat2); 
+		$c = 2 * atan2(sqrt($a), sqrt(1-$a)); 
+		$d = $R * $c;
+
+		//La distancia en kilometros es guardada en la variable $d
+
+		//Variables utilizadas en el correo de alerta
+		$newline = '
+		';
+		$timestamp =  date("F j, Y, g:i a");
+		$poslink = "https://maps.google.com/maps?q=".$latsc_map0.",".$lonsc_map0;
+
+		//Evaluo si la distancia es mayor a la del radio seleccionado
+		//Si es asi envio un correo de alerta
+		if ($d*1000>$Radio)
+		{
+			
+			echo "Afuera de los limites";	
+			$to = "correo_familiar@alerta.com";
+			$subject = "Correo de alerta  ";
+			$message = "Mensaje de alerta".$newline."Identificacion: LM741CN".$newline."Hora y Fecha : ".$timestamp.$newline."Descripcion: Dispositivo fuera de area permitida".$newline."Ultima ubicacion: ".$latsc_map0." ".$lonsc_map0.$newline."Link de ultima ubicacion : ".$poslink;
+			$from = "servicios_alerta@alerta.com";
+			$headers = "From:" . $from;
+			mail($to,$subject,$message,$headers);
+			echo "Mail Sent.";
+			
+		}
+		// De ser lo contrario, no enviamos ningun mensaje de alerta
+		else
+		{
+				
+			echo "Dentro de los limites";	
+			
+		}
+
+
+
+?>
+
+</body>
+</html>
