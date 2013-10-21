@@ -1,0 +1,145 @@
+
+//Universidad del Valle de Guatemala
+//Trabajo de graduacion Sistema de localización y rastreo por medio de alarma de pánico personal
+//Presentado por Victor Alberto Vargas Contreras, 08470
+//Guatemala 2013
+
+//Descripcion del codigo: En los modos principales de operacion se tiene el decodificador de la informacion que envio 
+//el dispositivo. 
+//Este decodificador es llamado PARSER.PHP y es el encargado principalmente de ingresar las posiciones a la 
+//base de datos provenientes del dispositivo y verificar que el formato de datos sea el correcto
+
+
+<html>
+<head>
+<title>My Page</title>
+</head>
+<body>
+
+
+<?php
+
+
+	//Parametros para crecendiales a la base de datos. Por seguridad se han omitido
+	$HOST = "";
+	$USERDB = "";
+	$PASSDB = "";
+	$NAMEDB = "";
+	$TABLENAME1 = "";
+	$TABLENAME2 = "";
+	
+	
+	$LATITUDDB   = 0.0;
+	$LONGITUDDB  = 0.0;
+	
+	//Variables de las posiciones ingresadas en formado Grados mas minutos decimales
+	$LATPAR	     = floatval($_POST["lat"]);
+	$LONPAR	     = floatval($_POST["lon"]);
+	//Conversione a minutos decimales
+	$LATPAR	     = intval($LATPAR)+ ($LATPAR - intval($LATPAR))*(100/60);
+	$LONPAR	     = (intval($LONPAR)+ ($LONPAR - intval($LONPAR))*(100/60))*(-1);
+
+	
+	$LATITUDDB   = $LATPAR;	
+	$LONGITUDDB  = $LONPAR;
+	
+	//Varaible usuario, quien ingresa los datos y el origen (request o ingreso directo)
+	$USER        = $_POST["user"];
+	$ORG         = intval($_POST["org"]);
+	
+	//Parametros para saber cuando fue ingresada la ubicacion	
+	$MESDB = 0;
+	$MESDB = intval(date(m));
+	$DIADB = 0;
+	$DIADB = intval(date(d));	
+	$ANIODB = 0;
+	$ANIODB = intval(date(Y));	
+	$HORASDB = 0;
+	$HORASDB = intval(date(H));
+	
+	
+	// Create conexion con la base de datos que contiene a los usuarios
+	$con=mysqli_connect($HOST,$USERDB,$PASSDB,$NAMEDB);
+
+	// Check connection
+	if (mysqli_connect_errno($con))
+	  {
+	  	echo "Failed to connect to MySQL : " . mysqli_connect_error();
+	  }
+	else
+	  { 
+	    
+		//Si la variable $ORG es igual a 1 ingreso directamente a la base de datos
+	  	if($ORG == 1)
+	        {
+		  	//Ingreso a la base datos las posiciones si son validas
+		  	if($LATITUDDB>1 ||  $LONGITUDDB<1)
+		  	{
+		  		//Si es que no tengo las variables llenas de ceros 
+		  		
+		  		//Query a DB
+		  		$resultado_x = mysqli_query($con,"INSERT INTO `UBICA`( `LAT`, `LON`, `MES`, `DIA`, `ANIO`, `HORA`) VALUES ($LATITUDDB,$LONGITUDDB, $MESDB,$DIADB,$ANIODB, $HORASDB ) ");
+			        
+			        if($resultado_x)
+			        {
+						//Respuesta a servidor
+			        	echo "Good";
+			   
+			        }
+			        else
+			        {
+			        	echo "Error sending";
+			        }
+		  	
+		  	}
+		  	else
+		  	{
+		  		echo "variables malas";
+		  	}
+	  	} 
+	  	//Si es para verificar si se nos ha solicitado ubicacion verifico en mi DB
+	  	if($ORG == 0)
+	  	{
+		  	//Busco entre los usuarios el request	
+		  	$resultado = mysqli_query($con,"SELECT `Request` FROM `Usuarios` ");
+			        
+		        if($resultado)
+		        {
+		        
+				$row = mysqli_fetch_array($resultado);
+				
+				//Si su estado de request es igual a uno envio mensaje a servidor	
+				if(intval($row['Request'])==1)
+				{
+					//Respuesta a servidor
+					echo "REEQQ";
+					//Limpio mi variable de request
+					$resultado2 = mysqli_query($con,"UPDATE `Usuarios` SET `Request`=0 ");
+					
+				}
+				else
+				{
+					//Si es que no esta en uno la variable se envia la respuesta adecuada al modulo
+					echo "NOQ";
+				}
+							
+		        }
+		        else
+		        {
+		        	echo "Error sending";
+		        }
+	        }
+	      
+	        mysqli_close($con);	
+        
+	 }  
+	       	
+          
+?>
+
+
+
+
+
+</body>
+</html>
