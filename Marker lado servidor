@@ -1,0 +1,327 @@
+//Universidad del Valle de Guatemala
+//Trabajo de graduacion Sistema de localización y rastreo por medio de alarma de pánico personal
+//Presentado por Victor Alberto Vargas Contreras, 08470
+//Guatemala 2013
+
+//Descripcion del codigo: El presente archivo contiene el codigo para el despliegue de las opciones del servicio
+//Marker
+
+<html>
+<head>
+<title>My Page</title>
+</head>
+<body>
+
+
+<div id="header" style="background-color:#A9D0F5;"
+<h1 style="margin-bottom:0;">Sistema de localizacion y rastreo por medio de alarma de panico personal</h1></div>
+
+<div id="content" style="background-color:#EEEEEE;height:400px;width:200px;float:left;">
+<?php
+
+	$latarray = array();	
+	$lonarray = array();   
+	//Credenciales para accesar a la DB. Por seguridad se omiten
+	$HOST = "";
+	$USERDB = "";
+	$PASSDB = "";
+	$NAMEDB = "";
+	$TABLENAME = "";
+	
+	
+	//Parametros de entrada para hacer la solicitud al servidor
+	$MESDB = 0;
+	$MESDB = intval($_POST["MES"]);
+	$DIADB = 0;
+	$DIADB = intval($_POST["DIA"]);	
+	$HORAS1DB = 0;
+	$HORAS1DB = intval($_POST["HORA1"]);	
+	$HORAS2DB = 0;
+	$HORAS2DB = intval($_POST["HORA2"]);
+	
+	
+
+	
+	// Create connection
+	$con=mysqli_connect($HOST,$USERDB,$PASSDB,$NAMEDB);
+
+	// Check connection
+	if (mysqli_connect_errno($con))
+	  {
+	  	echo "Failed to connect to MySQL : " . mysqli_connect_error();
+	  }
+	else
+	  { 
+	  
+	  	if($HORAS2DB>$HORAS1DB)
+	  
+	        {
+	  	
+				//Dependiendo de los parametros, se hace la busqueda en la base de datos
+		        $resultado = mysqli_query($con,"SELECT * FROM `UBICA` WHERE DIA = $DIADB AND MES = $MESDB AND HORA >= $HORAS1DB AND HORA <= $HORAS2DB ");
+		        
+		        if($resultado)
+		        {
+		        	
+		        	//Guardo las posiciones en un array
+		        	while($row = mysqli_fetch_array($resultado))
+				  {
+				  $latarray[] = $row['LAT']; 
+				  $lonarray[] = $row['LON'];
+				  $contador++;
+				  }
+
+		        }
+		        else
+		        {
+		        	echo "Error sending";
+		        }
+		      
+		        mysqli_close($con);	
+	        
+	        }  
+	        else
+	        {
+	        
+	        	echo "Valores invalidos para las horas ";
+	        }	 	
+          }
+?>
+</div>
+
+<div id="Mapa de ubicacion" style="background-color:##FFFFFF;height:200px;width:600px;float:left;">
+<b>Mapa de ubicacion</b><br>
+
+<html>
+<head>
+<script
+src="http://maps.googleapis.com/maps/api/js?key=AIzaSyDY0kkJiTPVd2U7aTOAwhc9ySH6oHxOIYM&sensor=false">
+</script>
+
+<script>
+
+//En esta seccion se despliega el API de Google con las ultimas posiciones encontradas
+
+			var latsc_map0 = 0;
+			var latsc_map1 = 0;
+			var latsc_map2 = 0;
+			var latsc_map3 = 0;
+			var latsc_map4 = 0;
+			
+	        var lonsc_map0 = 0;
+	        var lonsc_map1 = 0;
+	        var lonsc_map2 = 0;
+	        var lonsc_map3 = 0;
+	        var lonsc_map4 = 0;
+	        
+	        var countsc=0;
+	        countsc = "<?php echo count($latarray); ?>";
+	      
+			//Dependiendo de la cantidad arrojada por el "querry", asi desplegaremos
+	      	 if(countsc==0)
+	         {
+    			alert("No se encontro ninguna ubicacion");
+        	 }
+	      	  if(countsc==1)
+	         {
+	         
+	      
+	         
+        	 latsc_map0 = "<?php echo $latarray[intval(count($latarray))-1]; ?>";
+        	 lonsc_map0 = "<?php echo $lonarray[intval(count($lonarray))-1];  ?>";
+        	 
+        	 
+        	 var myCenter=new google.maps.LatLng(latsc_map0,lonsc_map0);
+		        	
+
+			function initialize()
+			{
+				var mapProp = {center:myCenter,zoom:12,mapTypeId:google.maps.MapTypeId.ROADMAP};
+				
+				var map=new google.maps.Map(document.getElementById("googleMap"),mapProp);
+				
+				var marker=new google.maps.Marker({position:myCenter,animation:google.maps.Animation.BOUNCE});
+				marker.setIcon('http://maps.google.com/mapfiles/ms/icons/green-dot.png');
+
+				marker.setMap(map);
+				
+				
+				
+			}
+	
+			google.maps.event.addDomListener(window, 'load', initialize);
+
+        	 }
+	      	 if(countsc==2)
+	         {
+		        	 latsc_map0 = "<?php echo $latarray[intval(count($latarray))-2]; ?>";
+        	 		 lonsc_map0 = "<?php echo $lonarray[intval(count($lonarray))-2];  ?>";
+		        	 latsc_map1 = "<?php echo $latarray[intval(count($latarray))-1]; ?>";
+        	 		 lonsc_map1 = "<?php echo $lonarray[intval(count($lonarray))-1];  ?>";
+        	 
+        	 	        var myCenter=new google.maps.LatLng(latsc_map1,lonsc_map1);
+		        	var pos0 = new google.maps.LatLng(latsc_map0,lonsc_map0);
+
+			function initialize()
+			{
+				var mapProp = {center:myCenter,zoom:12,mapTypeId:google.maps.MapTypeId.ROADMAP};
+				
+				var map=new google.maps.Map(document.getElementById("googleMap"),mapProp);
+				
+				var marker=new google.maps.Marker({position:myCenter,animation:google.maps.Animation.BOUNCE});
+				marker.setIcon('http://maps.google.com/mapfiles/ms/icons/green-dot.png');
+				
+				
+				
+				var markpos0 = new google.maps.Marker({position:pos0,});
+				
+				marker.setMap(map);
+				markpos0.setMap(map);
+				
+				
+			}
+	
+			google.maps.event.addDomListener(window, 'load', initialize);
+        
+        	 }
+	         if(countsc==3)
+	         {
+	        	 latsc_map0 = "<?php echo $latarray[intval(count($latarray))-3]; ?>";
+	 		 lonsc_map0 = "<?php echo $lonarray[intval(count($lonarray))-3];  ?>";
+	        	 latsc_map1 = "<?php echo $latarray[intval(count($latarray))-2]; ?>";
+	 		 lonsc_map1 = "<?php echo $lonarray[intval(count($lonarray))-2];  ?>";
+	 		 latsc_map2 = "<?php echo $latarray[intval(count($latarray))-1]; ?>";
+	 		 lonsc_map2 = "<?php echo $lonarray[intval(count($lonarray))-1];  ?>";
+	        	 
+	        	var myCenter=new google.maps.LatLng(latsc_map2,lonsc_map2);
+	        	var pos1 = new google.maps.LatLng(latsc_map1,lonsc_map1);
+	        	var pos0 = new google.maps.LatLng(latsc_map0,lonsc_map0);
+
+			function initialize()
+			{
+				var mapProp = {center:myCenter,zoom:12,mapTypeId:google.maps.MapTypeId.ROADMAP};
+				
+				var map=new google.maps.Map(document.getElementById("googleMap"),mapProp);
+				
+				var marker=new google.maps.Marker({position:myCenter,animation:google.maps.Animation.BOUNCE});
+				marker.setIcon('http://maps.google.com/mapfiles/ms/icons/green-dot.png');
+				
+				
+				var markpos1 = new google.maps.Marker({position:pos1,});
+				var markpos0 = new google.maps.Marker({position:pos0,});
+				
+				marker.setMap(map);
+				markpos1.setMap(map);
+				markpos0.setMap(map);
+				
+				
+			}
+	
+			google.maps.event.addDomListener(window, 'load', initialize);
+        
+        	 }
+	         if(countsc==4)
+	         {
+	        	 latsc_map0 = "<?php echo $latarray[intval(count($latarray))-4]; ?>";
+	 		 lonsc_map0 = "<?php echo $lonarray[intval(count($lonarray))-4];  ?>";
+	        	 latsc_map1 = "<?php echo $latarray[intval(count($latarray))-3]; ?>";
+	 		 lonsc_map1 = "<?php echo $lonarray[intval(count($lonarray))-3];  ?>";
+	 		 latsc_map2 = "<?php echo $latarray[intval(count($latarray))-2]; ?>";
+	 		 lonsc_map2 = "<?php echo $lonarray[intval(count($lonarray))-2];  ?>";
+	 		 latsc_map3 = "<?php echo $latarray[intval(count($latarray))-1]; ?>";
+	 		 lonsc_map3 = "<?php echo $lonarray[intval(count($lonarray))-1];  ?>";
+	        	 
+	        	var myCenter=new google.maps.LatLng(latsc_map3,lonsc_map3);
+	        	var pos2 = new google.maps.LatLng(latsc_map2,lonsc_map2);
+	        	var pos1 = new google.maps.LatLng(latsc_map1,lonsc_map1);
+	        	var pos0 = new google.maps.LatLng(latsc_map0,lonsc_map0);
+
+			function initialize()
+			{
+				var mapProp = {center:myCenter,zoom:12,mapTypeId:google.maps.MapTypeId.ROADMAP};
+				
+				var map=new google.maps.Map(document.getElementById("googleMap"),mapProp);
+				
+				var marker=new google.maps.Marker({position:myCenter,animation:google.maps.Animation.BOUNCE});
+				marker.setIcon('http://maps.google.com/mapfiles/ms/icons/green-dot.png');
+				
+				var markpos2 = new google.maps.Marker({position:pos2,});
+				var markpos1 = new google.maps.Marker({position:pos1,});
+				var markpos0 = new google.maps.Marker({position:pos0,});
+				
+				marker.setMap(map);
+				markpos2.setMap(map);
+				markpos1.setMap(map);
+				markpos0.setMap(map);
+				
+				
+			}
+	
+			google.maps.event.addDomListener(window, 'load', initialize);
+        	 }
+        	 
+        	 if(countsc>=5)
+        	 {
+        	 
+        	 	 latsc_map0 = "<?php echo $latarray[intval(count($latarray))-5]; ?>";
+	 		 lonsc_map0 = "<?php echo $lonarray[intval(count($lonarray))-5];  ?>";
+	        	 latsc_map1 = "<?php echo $latarray[intval(count($latarray))-4]; ?>";
+	 		 lonsc_map1 = "<?php echo $lonarray[intval(count($lonarray))-4];  ?>";
+	 		 latsc_map2 = "<?php echo $latarray[intval(count($latarray))-3]; ?>";
+	 		 lonsc_map2 = "<?php echo $lonarray[intval(count($lonarray))-3];  ?>";
+	 		 latsc_map3 = "<?php echo $latarray[intval(count($latarray))-2]; ?>";
+	 		 lonsc_map3 = "<?php echo $lonarray[intval(count($lonarray))-2];  ?>";
+	        	 latsc_map4 = "<?php echo $latarray[intval(count($latarray))-1]; ?>";
+	 		 lonsc_map4 = "<?php echo $lonarray[intval(count($lonarray))-1];  ?>";
+	        	 
+        	 	var myCenter=new google.maps.LatLng(latsc_map4,lonsc_map4);
+        	 	var pos3 = new google.maps.LatLng(latsc_map3,lonsc_map3);
+	        	var pos2 = new google.maps.LatLng(latsc_map2,lonsc_map2);
+	        	var pos1 = new google.maps.LatLng(latsc_map1,lonsc_map1);
+	        	var pos0 = new google.maps.LatLng(latsc_map0,lonsc_map0);
+	        	
+			function initialize()
+			{
+				var mapProp = {center:myCenter,zoom:12,mapTypeId:google.maps.MapTypeId.ROADMAP};
+				
+				var map=new google.maps.Map(document.getElementById("googleMap"),mapProp);
+				
+				var marker=new google.maps.Marker({position:myCenter,animation:google.maps.Animation.BOUNCE});
+				marker.setIcon('http://maps.google.com/mapfiles/ms/icons/green-dot.png');
+				
+				var markpos3 = new google.maps.Marker({position:pos3,});
+				var markpos2 = new google.maps.Marker({position:pos2,});
+				var markpos1 = new google.maps.Marker({position:pos1,});
+				var markpos0 = new google.maps.Marker({position:pos0,});
+				
+				marker.setMap(map);
+				markpos3.setMap(map);
+				markpos2.setMap(map);
+				markpos1.setMap(map);
+				markpos0.setMap(map);
+				
+				
+			}	        
+			
+			google.maps.event.addDomListener(window, 'load', initialize);	        	 
+        	 
+        	 }
+        	 
+        	 
+ 
+	           
+
+
+</script>
+</head>
+
+<body>
+<div id="googleMap" style="width:500px;height:380px;"></div>
+</body>
+</html>
+
+</div>
+
+
+</body>
+</html>
